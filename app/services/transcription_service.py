@@ -43,7 +43,7 @@ class TranscriptionService:
 
         # Check the file size
         file_size = os.path.getsize(filename)
-        max_size = 20 * 1024 * 1024  # 25 MB in bytes
+        max_size = 25 * 1024 * 1024  # 25 MB in bytes
 
         if file_size > max_size:
             logging.info(f"File {filename} is {file_size / (1024 * 1024):.2f} MB, exceeding the 25 MB limit. Splitting into chunks.")

@@ -1,0 +1,9 @@
+@baseUrl = http://127.0.0.1:8000
+
+### Demo - Workflow  
+POST {{baseUrl}}/workflow
+Content-Type: application/json
+
+{
+  "filePath": "C:\\Users\\scrutz\\Downloads\\wikipediaOcelot.wav"
+}

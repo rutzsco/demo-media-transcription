@@ -18,29 +18,50 @@ class TranscriptionService:
     def __init__(self):
         # Load environment variables from .env file
         load_dotenv()
-
-    async def get_transcription(self, filename: str):
-        # --- Video to WAV conversion ---
+        
+    def convert_video_to_wav(self, filename: str) -> str:
+        """
+        Converts video files to MP3 format for transcription.
+        
+        Args:
+            filename: Path to the input file
+            
+        Returns:
+            Path to the MP3 file (either converted or original if not a video)
+        """
         file_path = Path(filename)
         video_extensions = [".mp4", ".mov", ".avi", ".mkv"]
+        
         if file_path.suffix.lower() in video_extensions:
             logging.info(f"Detected video file ({file_path.suffix}). Converting to WAV format.")
             try:
-                # Create a temporary WAV file for the conversion result
-                with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp_wav:
-                    wav_filename = tmp_wav.name
+                # Create a temporary MP3 file for the conversion result
+                with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as tmp_wav:
+                    mp3_filename = tmp_wav.name
                 # Ensure ffmpeg is correctly set (update the path as needed)
                 AudioSegment.converter = r"C:\Users\scrutz\AppData\Local\Microsoft\WinGet\Links\ffmpeg.exe"
                 # Load the video file (pydub will extract the audio track)
                 audio = AudioSegment.from_file(filename)
-                audio.export(wav_filename, format="wav")
+                # Reduce audio quality to minimize file size
+                # Convert to mono (1 channel)
+                audio = audio.set_channels(1)
+                # Reduce sample rate to 16kHz (sufficient for speech recognition)
+                audio = audio.set_frame_rate(16000)
+                # Export with reduced quality settings
+                audio.export(mp3_filename, format="mp3", bitrate="32k")
                 logging.info("Video to WAV conversion successful.")
-                # Update filename to point to the new WAV file
-                filename = wav_filename
+                # Return the new WAV file
+                return mp3_filename
             except Exception as e:
-                logging.error(f"Video to WAV conversion failed: {e}")
-                raise Exception("Video to WAV conversion failed")
-        # --- End conversion ---
+                logging.error(f"Video to MP3 conversion failed: {e}")
+                raise Exception("Video to MP3 conversion failed")
+        
+        # Return the original filename if not a video file
+        return filename
+
+    async def get_transcription(self, filename: str):
+        # Convert video to WAV if needed
+        filename = self.convert_video_to_wav(filename)
 
         # Configure OpenAI with Azure settings
         openai.api_type = "azure"
